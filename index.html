@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Exclusive Access – $100 BTC Membership</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .fade-in { animation: fadeIn 0.5s ease-out both; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-950 to-black text-white min-h-screen flex items-center justify-center px-4">
+
+  <div id="paywall" class="max-w-xl w-full text-center bg-gray-900 rounded-2xl shadow-2xl p-8 fade-in border border-gray-700">
+    <h1 class="text-4xl font-bold text-white mb-4 tracking-tight">Join the Premium Club</h1>
+    <p class="text-gray-300 mb-2 text-lg">Access exclusive tools, early drops, and AI utilities—</p>
+    <p class="text-green-400 font-semibold text-lg mb-6">Only $100 / month (0.0015 BTC)</p>
+
+    <div class="bg-gray-800 rounded-xl p-4 shadow-inner mb-4">
+      <p class="text-sm mb-1 text-gray-400">Send BTC to this address:</p>
+      <div class="flex items-center justify-between gap-2">
+        <code id="btc-address" class="text-green-300 text-sm break-all">bc1qr9q2guknkasgqvkv2lrmg52kyj492xac6d2hrk</code>
+        <button onclick="copyAddress()" class="bg-gray-600 hover:bg-gray-700 text-xs px-3 py-1 rounded">Copy</button>
+      </div>
+    </div>
+
+    <details class="mb-4 text-sm text-gray-400">
+      <summary class="cursor-pointer text-gray-300 hover:text-white">Prefer QR code?</summary>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=bitcoin:bc1qr9q2guknkasgqvkv2lrmg52kyj492xac6d2hrk?amount=0.0015" class="mx-auto mt-2" />
+    </details>
+
+    <button onclick="verifyPayment()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-full font-bold text-lg shadow-md transition">I’ve Paid – Unlock Access</button>
+    <p id="status" class="text-sm text-gray-400 mt-4"></p>
+
+    <p class="mt-6 text-xs text-gray-500">Secure payments powered by Bitcoin. 30-day unlock. Instant access. No registration required.</p>
+  </div>
+
+  <div id="content" class="hidden text-center fade-in">
+    <h2 class="text-3xl font-bold text-white mb-2">Welcome to the Inner Circle</h2>
+    <p class="text-gray-300 mb-4">You’ve unlocked all premium content for the next 30 days.</p>
+    <p class="text-xs text-gray-500">Want to keep access? Just send $100 BTC again next cycle.</p>
+  </div>
+
+  <script>
+    function copyAddress() {
+      const addr = document.getElementById("btc-address").textContent;
+      navigator.clipboard.writeText(addr).then(() => {
+        alert("Bitcoin address copied.");
+      });
+    }
+
+    async function verifyPayment() {
+      const status = document.getElementById("status");
+      status.textContent = "Verifying payment via blockchain...";
+      const res = await fetch("http://127.0.0.1:5000/verify", { method: "POST" });
+      const result = await res.json();
+      if (result.valid) {
+        const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
+        localStorage.setItem("btc_paid", "true");
+        localStorage.setItem("btc_expiry", expiry.toString());
+        showContent();
+      } else {
+        status.textContent = "No valid payment found. Try again later.";
+      }
+    }
+
+    function showContent() {
+      document.getElementById("paywall").classList.add("hidden");
+      document.getElementById("content").classList.remove("hidden");
+    }
+
+    if (localStorage.getItem("btc_paid") === "true") {
+      const expiry = parseInt(localStorage.getItem("btc_expiry"));
+      if (Date.now() < expiry) showContent();
+      else localStorage.clear();
+    }
+  </script>
+</body>
+</html>
